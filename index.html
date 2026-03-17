@@ -729,7 +729,23 @@ input,select,textarea{font-family:'Outfit',sans-serif}
       <div class="fg"><label>Montant (FCFA) *</label><input id="tx-mnt" type="number" placeholder="15000"></div>
       <div class="fg"><label>Date</label><input id="tx-date" type="date"></div>
     </div>
-    <div class="fg"><label>Catégorie</label><select id="tx-cat"><option>Cotisations</option><option>Dons / Zakat</option><option>Activités / Événements</option><option>Charges / Loyer</option><option>Matériel</option><option>Transport</option><option>Restauration</option><option>Autre</option></select></div>
+    <div class="fg"><label>Catégorie</label><select id="tx-cat" onchange="onTxCatChange(this.value)"><option>Cotisations</option><option>Dons / Zakat</option><option>Activités / Événements</option><option>Charges / Loyer</option><option>Matériel</option><option>Transport</option><option>Restauration</option><option>Autre</option></select></div>
+    <div id="tx-cotis-detail" style="display:none">
+      <div class="fg"><label>Cotisation concernée</label>
+        <select id="tx-cotis-id">
+          <option value="">-- Sélectionner une cotisation --</option>
+          <option value="mensuelle">Mensuelle</option>
+          <option value="commission">Commission Finances</option>
+          <option value="magal">Magal Touba 2026</option>
+          <option value="urgence">Aide Urgence Membre</option>
+        </select>
+      </div>
+      <div class="fg"><label>Membre concerné (optionnel)</label>
+        <select id="tx-membre-id">
+          <option value="">-- Tous les membres --</option>
+        </select>
+      </div>
+    </div>
     <div class="fg"><label>Note</label><textarea id="tx-note" placeholder="Remarques optionnelles…"></textarea></div>
     <button class="btn-p" onclick="saveTx()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Enregistrer</button>
   </div>
@@ -793,6 +809,7 @@ input,select,textarea{font-family:'Outfit',sans-serif}
     </div>
     <div class="dp-acts">
       <button class="btn-gr" onclick="markPaid()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><polyline points="20 6 9 17 4 12"/></svg> Cotisation payée</button>
+      ${role==='tresorier'?`<button class="btn-p" style="flex:1;padding:10px;font-size:12px" onclick="ouvrirTxPourMembre(${sbId})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Tx membre</button>`:''}
       <button class="btn-s" onclick="sendRelance()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 11.3 19.79 19.79 0 0 1 1.6 2.69 2 2 0 0 1 3.6.5h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.1a16 16 0 0 0 6 6l.92-.92a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.5 15.5z"/></svg> Relancer
       </button>
@@ -817,6 +834,202 @@ input,select,textarea{font-family:'Outfit',sans-serif}
       </div>
     </div>
     <div style="font-size:11px;color:var(--tx4);text-align:center;margin-top:8px">Votre paiement sera enregistré et un reçu généré</div>
+  </div>
+</div>
+
+<!-- MODAL DÉTAILS ANNONCE -->
+<div class="moverlay" id="m-detail-ann">
+  <div class="modal">
+    <div class="mh"><h3>Annonce</h3><button class="mx" onclick="closeM('m-detail-ann')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div id="ann-detail-content"></div>
+  </div>
+</div>
+
+<!-- MODAL DÉTAILS ÉVÉNEMENT -->
+<div class="moverlay" id="m-detail-ev">
+  <div class="modal">
+    <div class="mh"><h3>Événement</h3><button class="mx" onclick="closeM('m-detail-ev')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div id="ev-detail-content"></div>
+  </div>
+</div>
+
+<!-- MODAL NOUVELLE SESSION CORAN -->
+<div class="moverlay" id="m-add-session-coran">
+  <div class="modal">
+    <div class="mh"><h3>Nouvelle session Coran</h3><button class="mx" onclick="closeM('m-add-session-coran')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="fg"><label>Titre de la session *</label><input id="cs-titre" placeholder="Ex: Lecture complète — Intention Gamou 2026"></div>
+    <div class="fr">
+      <div class="fg"><label>Date début *</label><input id="cs-debut" type="date"></div>
+      <div class="fg"><label>Date limite *</label><input id="cs-fin" type="date"></div>
+    </div>
+    <div class="fg"><label>Intention spirituelle (optionnel)</label><input id="cs-intention" placeholder="Ex: Pour la santé de la communauté"></div>
+    <div class="fg"><label>Mode de découpage</label>
+      <select id="cs-mode">
+        <option value="juz30">30 Juz (découpage standard)</option>
+        <option value="hizb60">60 Hizb (découpage traditionnel)</option>
+        <option value="custom">Personnalisé</option>
+      </select>
+    </div>
+    <div class="fg"><label>Répartition</label>
+      <select id="cs-repartition">
+        <option value="auto">Automatique (équitable)</option>
+        <option value="manuel">Manuelle (affecter moi-même)</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="saveSessionCoran()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Créer la session</button>
+  </div>
+</div>
+
+<!-- MODAL NOUVELLE COTISATION (Trésorier) -->
+<div class="moverlay" id="m-add-cotisation">
+  <div class="modal">
+    <div class="mh"><h3>Nouvelle cotisation</h3><button class="mx" onclick="closeM('m-add-cotisation')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="fg"><label>Nom de la cotisation *</label><input id="nc-nom" placeholder="Ex: Mensuelle Janvier 2026, Aide urgence Mbacké…"></div>
+    <div class="fr">
+      <div class="fg"><label>Type *</label>
+        <select id="nc-type">
+          <option value="ordinaire">Ordinaire (fonctionnement)</option>
+          <option value="commission">Commission</option>
+          <option value="evenement">Événement / Activité</option>
+          <option value="extraordinaire">Extraordinaire (urgence)</option>
+        </select>
+      </div>
+      <div class="fg"><label>Périodicité</label>
+        <select id="nc-periode">
+          <option value="mensuelle">Mensuelle</option>
+          <option value="trimestrielle">Trimestrielle</option>
+          <option value="ponctuelle">Ponctuelle</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Montant (FCFA)</label><input id="nc-montant" type="number" placeholder="15000"></div>
+      <div class="fg"><label>Montant</label>
+        <select id="nc-montant-type">
+          <option value="fixe">Fixe</option>
+          <option value="libre">Libre (à volonté)</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Date début</label><input id="nc-debut" type="date"></div>
+      <div class="fg"><label>Date fin (opt.)</label><input id="nc-fin" type="date"></div>
+    </div>
+    <div class="fg"><label>Portée cible</label>
+      <select id="nc-cible">
+        <option value="tous">Tous les membres actifs</option>
+        <option value="actifs">Membres actifs seulement</option>
+        <option value="commission">Une commission spécifique</option>
+        <option value="manuel">Sélection manuelle</option>
+        <option value="sympathisants">Sympathisants</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="saveCotisation()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Créer la cotisation</button>
+  </div>
+</div>
+
+<!-- MODAL PAIEMENT PARTIEL -->
+<div class="moverlay" id="m-paiement-partiel">
+  <div class="modal">
+    <div class="mh"><h3>Paiement partiel</h3><button class="mx" onclick="closeM('m-paiement-partiel')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="pay-confirm" id="pp-confirm-box"></div>
+    <div class="fg" style="margin-top:14px"><label>Montant à verser (FCFA) *</label><input id="pp-montant" type="number" placeholder="Ex: 7500"></div>
+    <div class="fg"><label>Mode de paiement</label>
+      <select id="pp-mode">
+        <option value="Orange Money">🟠 Orange Money</option>
+        <option value="Wave">🔵 Wave</option>
+        <option value="Espèces">💵 Espèces</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="confirmerPaiementPartiel()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Confirmer le versement</button>
+  </div>
+</div>
+
+<!-- MODAL DÉTAILS COMMISSION -->
+<div class="dpanel" id="d-commission">
+  <div class="dp">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-size:17px;font-weight:800;color:var(--tx)" id="dc-titre"></h3>
+      <button class="mx" onclick="closeD('d-commission')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <div id="dc-content"></div>
+  </div>
+</div>
+
+<!-- MODAL AJOUTER MEMBRE COMMISSION (Resp Commission) -->
+<div class="moverlay" id="m-add-membre-commission">
+  <div class="modal">
+    <div class="mh"><h3>Ajouter à la commission</h3><button class="mx" onclick="closeM('m-add-membre-commission')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <p style="font-size:12.5px;color:var(--tx4);margin-bottom:14px">Sélectionnez des membres existants à affecter à la commission Organisation.</p>
+    <div id="amc-liste" style="max-height:320px;overflow-y:auto;border:1.5px solid var(--S2);border-radius:10px;margin-bottom:14px"></div>
+    <button class="btn-p" onclick="confirmerAjoutMembreCommission()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Affecter les membres sélectionnés</button>
+  </div>
+</div>
+
+<!-- MODAL AJOUTER DAHIRA -->
+<div class="moverlay" id="m-add-dahira">
+  <div class="modal">
+    <div class="mh"><h3>Enregistrer un dahira</h3><button class="mx" onclick="closeM('m-add-dahira')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="fg"><label>Nom du dahira *</label><input id="nd-nom" placeholder="Ex: Al-Mouridiya Dakar-Plateau"></div>
+    <div class="fr">
+      <div class="fg"><label>Confrérie *</label>
+        <select id="nd-conf">
+          <option>Mouridiya</option><option>Tijaniya</option><option>Khadriya</option><option>Layène</option><option>Niassène</option><option>Autre</option>
+        </select>
+      </div>
+      <div class="fg"><label>Statut affiliation</label>
+        <select id="nd-statut">
+          <option value="Affilié">Affilié CUDIS</option>
+          <option value="En cours">En cours de validation</option>
+          <option value="Non affilié">Non affilié</option>
+        </select>
+      </div>
+    </div>
+    <div class="fr">
+      <div class="fg"><label>Région</label>
+        <select id="nd-region">
+          ${['Dakar','Thiès','Kaolack','Diourbel','Ziguinchor','Saint-Louis','Louga','Fatick','Tambacounda','Kolda','Matam'].map(r=>`<option>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div class="fg"><label>Département</label><input id="nd-dept" placeholder="Ex: Plateau"></div>
+    </div>
+    <div class="fg"><label>Adresse du siège</label><input id="nd-adresse" placeholder="Adresse complète"></div>
+    <div class="fr">
+      <div class="fg"><label>Date de création</label><input id="nd-date" type="date"></div>
+      <div class="fg"><label>Nombre de membres</label><input id="nd-membres" type="number" placeholder="0"></div>
+    </div>
+    <button class="btn-p" onclick="saveDahira()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Enregistrer le dahira</button>
+  </div>
+</div>
+
+<!-- MODAL DÉTAILS DAHIRA (Admin CUDIS) -->
+<div class="dpanel" id="d-dahira">
+  <div class="dp">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="font-size:17px;font-weight:800;color:var(--tx)" id="dd-titre"></h3>
+      <button class="mx" onclick="closeD('d-dahira')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <div id="dd-content"></div>
+  </div>
+</div>
+
+<!-- MODAL MODIFIER PROFIL MEMBRE -->
+<div class="moverlay" id="m-modifier-profil">
+  <div class="modal">
+    <div class="mh"><h3>Modifier mon profil</h3><button class="mx" onclick="closeM('m-modifier-profil')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+    <div class="fr">
+      <div class="fg"><label>Prénom</label><input id="mp-prenom" placeholder="Fatou"></div>
+      <div class="fg"><label>Nom</label><input id="mp-nom" placeholder="Amar"></div>
+    </div>
+    <div class="fg"><label>Téléphone</label><input id="mp-tel" type="tel" placeholder="+221 77 000 00 00"></div>
+    <div class="fg"><label>Email</label><input id="mp-email" type="email" placeholder="email@exemple.com"></div>
+    <div class="fg"><label>Langue préférée</label>
+      <select id="mp-langue">
+        <option value="fr">🇫🇷 Français</option>
+        <option value="wo">🇸🇳 Wolof</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="sauvegarderProfil()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Enregistrer les modifications</button>
   </div>
 </div>
 
@@ -1037,16 +1250,18 @@ const ROLES={
     bnav:['accueil','membres','evenements','coran','rapports'],
   },
   secretaire:{name:'Awa Diop',title:'Secrétaire du Dahira',init:'AD',avBg:'linear-gradient(135deg,#EA580C,#FB923C)',chip:{bg:'rgba(234,88,12,.1)',c:'#C2410C',br:'rgba(234,88,12,.25)',l:'Secrétaire'},
-    pages:['accueil','membres','annonces','evenements','coran','archives','notifs'],
+    pages:['accueil','membres','annonces','evenements','coran','rapports','finances','archives','notifs'],
     nav:[
       {id:'accueil',l:'Tableau de bord',ic:'layout-dashboard'},
       {id:'membres',l:'Gestion membres',ic:'users'},
       {id:'annonces',l:'Annonces',ic:'megaphone'},
-      {id:'evenements',l:'Événements',ic:'calendar'},
+      {id:'evenements',l:'Activités & Événements',ic:'calendar'},
       {id:'coran',l:'Gérer Coran',ic:'book-open'},
+      {id:'rapports',l:'Rapports',ic:'bar-chart-2'},
+      {id:'finances',l:'Finances',ic:'wallet'},
       {id:'archives',l:'Archives',ic:'archive'},
     ],
-    bnav:['accueil','membres','annonces','coran','evenements'],
+    bnav:['accueil','membres','evenements','coran','annonces'],
   },
   resp_commission:{name:'Ibrahima Mbaye',title:'Resp. Commission Organisation',init:'IM',avBg:'linear-gradient(135deg,#0D9488,#2DD4BF)',chip:{bg:'rgba(20,184,166,.1)',c:'#0F766E',br:'rgba(20,184,166,.25)',l:'Resp. Commission'},
     pages:['accueil','commission','evenements','annonces','notifs'],
@@ -1288,8 +1503,9 @@ function adminHome(){
     </div>`).join('')}
   </div>
   <div class="st"><h3>Dahiras affiliés</h3><button class="lnk" onclick="goPage('dahiras')">Voir tout ${icon('arrow-right',12)}</button></div>
+  <button class="btn-p" style="margin-bottom:14px;padding:11px;font-size:13px" onclick="openM('m-add-dahira')">${icon('plus',13,'white')} Enregistrer un dahira</button>
   <div class="card">
-    ${DAHIRAS.map(d=>`<div class="dhr">
+    ${DAHIRAS.map(d=>`<div class="dhr" style="cursor:pointer" onclick="voirDetailsDahira(d)">
       <div class="dh-ic">${icon('building',18,'var(--T4)')}</div>
       <div style="flex:1;min-width:0">
         <div class="dh-n">${d.n}</div>
@@ -1452,8 +1668,39 @@ function tresorHome(){
 function tresorCotisations(){
   const mbrs=ld(K.m),ok=mbrs.filter(m=>m.cotisOk).length,pct=Math.round(ok/Math.max(mbrs.length,1)*100);
   const total=mbrs.reduce((s,m)=>s+(m.cotisOk?m.cotis:0),0),due=mbrs.filter(m=>!m.cotisOk).reduce((s,m)=>s+m.cotis,0);
+  const cotisations=JSON.parse(localStorage.getItem('sd_cotis_types')||'[]');
+  // Types par défaut
+  const COTIS_DEF=[
+    {id:'mensuelle',label:'Mensuelle '+MONTHS[new Date().getMonth()]+' '+new Date().getFullYear(),type:'ordinaire',montant:15000,periode:'mensuelle',statut:'active',cible:'tous'},
+    {id:'commission',label:'Commission Finances',type:'commission',montant:5000,periode:'mensuelle',statut:'active',cible:'commission'},
+    {id:'magal',label:'Magal Touba 2026',type:'evenement',montant:10000,periode:'ponctuelle',statut:'active',cible:'tous'},
+    {id:'urgence',label:'Aide Urgence Membre',type:'extraordinaire',montant:2000,periode:'ponctuelle',statut:'active',cible:'tous'},
+    ...cotisations,
+  ];
+  const TYPE_COLORS={ordinaire:'var(--T4)',commission:'var(--gold-d)',evenement:'rgba(139,92,246,.8)',extraordinaire:'var(--rd)'};
   return`
-  <div class="ph2"><h2>Cotisations</h2><p>Suivi des paiements — ${curMonth()}</p></div>
+  <div class="ph2"><h2>Cotisations</h2><p>${COTIS_DEF.length} types actifs · ${curMonth()}</p></div>
+  <button class="btn-p" style="margin-bottom:14px;padding:11px;font-size:13px" onclick="openM('m-add-cotisation')">${icon('plus',13,'white')} Nouvelle cotisation</button>
+  <!-- LISTE DES COTISATIONS -->
+  <div class="st"><h3>Cotisations actives (${COTIS_DEF.length})</h3></div>
+  ${COTIS_DEF.map(c=>`<div class="card" style="margin-bottom:8px;border-left:3px solid ${TYPE_COLORS[c.type]||'var(--T4)'}">
+    <div style="padding:12px 16px;display:flex;align-items:center;gap:11px">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">${c.label}</div>
+        <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap">
+          <span style="font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:20px;background:rgba(26,80,96,.08);color:var(--T4)">${c.type}</span>
+          <span style="font-size:8.5px;color:var(--tx4)">${c.periode}</span>
+          <span style="font-size:8.5px;color:var(--tx4)">Cible: ${c.cible}</span>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:16px;font-weight:800;color:${TYPE_COLORS[c.type]||'var(--T4)'}">${fn(c.montant||0)}</div>
+        <div style="font-size:9px;color:var(--tx4)">FCFA</div>
+      </div>
+    </div>
+  </div>`).join('')}
+  <!-- STATS GLOBALES -->
+  <div class="st" style="margin-top:4px"><h3>Vue d'ensemble — ${curMonth()}</h3></div>
   <div class="row">
     <div class="sc sc-gr"><div class="sc-ic">${icon('check-circle',16,'var(--gr)')}</div><div class="sc-n">${ok}</div><div class="sc-l">À jour</div></div>
     <div class="sc sc-rd"><div class="sc-ic">${icon('alert-triangle',16,'var(--rd)')}</div><div class="sc-n">${mbrs.length-ok}</div><div class="sc-l">En retard</div></div>
@@ -1717,7 +1964,7 @@ function membreCotisations(){
     </div>`;
   }).join('')}
   <div class="st" style="margin-top:8px"><h3>Mensuelle — Historique ${curYr}</h3><button class="lnk" onclick="openPay()">+ Payer</button></div>
-  <div class="card">
+  <div class="card" style="margin-bottom:12px">
     <div class="cg" id="cotis-grid">
       ${MONTHS.map((m,i)=>{
         const k=curYr+'-'+String(i+1).padStart(2,'0');
@@ -1729,13 +1976,23 @@ function membreCotisations(){
         </div>`;
       }).join('')}
     </div>
+  </div>
+  <!-- LISTE DES PAIEMENTS -->
+  <div class="st"><h3>Historique des paiements</h3></div>
+  <div class="card">
+    ${(()=>{const paiements=ld(K.t).filter(t=>t.type==='recette'&&t.cat==='Cotisations');
+    return paiements.length?paiements.reverse().map(t=>`<div class="tr">
+      <div class="tr-ic" style="background:var(--gr-b)">${icon('check-circle',16,'var(--gr)')}</div>
+      <div class="tr-i"><div class="tr-n">${t.desc}</div><div class="tr-d">${fd(t.date)}${t.note?' · '+t.note:''}</div></div>
+      <div class="tr-a rec">+${fn(t.montant)}</div>
+    </div>`).join(''):`<div class="empty"><div class="empty-ic">${icon('file-text',28)}</div><p>Aucun paiement enregistré</p></div>`;})()}
   </div>`;
 }
 
 function membreEvenements(){
   const evs=ld(K.e).sort((a,b)=>a.date.localeCompare(b.date));
   return`
-  <div class="ph2"><h2>Événements</h2><p>Agenda du dahira Al-Mouridiya</p></div>
+  <div class="ph2"><h2>Activités & Événements</h2><p>Agenda du dahira Al-Mouridiya</p></div>
   <div class="ftabs">
     <div class="ftab on" onclick="switchCalView('liste',this)">📋 Liste</div>
     <div class="ftab" onclick="switchCalView('calendrier',this)">📅 Calendrier</div>
@@ -1813,7 +2070,18 @@ function membreCoran(){
   const taken=hizbs.filter(h=>h.status==='taken').length;
   const pct=Math.round(done/30*100);
   return`
-  <div class="ph2"><h2>Lecture du Coran</h2><p>Session collective — Intention Gamou 2026</p></div>
+  <div class="ph2"><h2>Lecture du Coran</h2><p>Sessions collectives du dahira</p></div>
+  <div class="card" style="margin-bottom:12px;cursor:pointer" onclick="toast('Session active sélectionnée')">
+    <div style="padding:14px 16px;display:flex;align-items:center;gap:12px">
+      <div style="width:42px;height:42px;border-radius:11px;background:linear-gradient(135deg,var(--T0),var(--T3));border:1px solid rgba(60,140,140,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0">${icon('book-open',18,'var(--gold-g)')}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--tx)">Lecture complète — Intention Gamou 2026</div>
+        <div style="font-size:10px;color:var(--tx4);margin-top:2px">En cours · Jan → Avr 2026</div>
+        <div style="height:4px;background:var(--S2);border-radius:99px;overflow:hidden;margin-top:6px"><div style="height:100%;width:${pct}%;border-radius:99px;background:linear-gradient(90deg,var(--T4),var(--gold-g))"></div></div>
+      </div>
+      <span class="bdg b-ok" style="flex-shrink:0">${pct}%</span>
+    </div>
+  </div>
   <div class="card" style="background:linear-gradient(135deg,var(--T0),var(--T3));border-color:rgba(60,140,140,.2);margin-bottom:12px">
     <div style="padding:16px">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
@@ -1903,7 +2171,7 @@ function sharedAnnonces(canAdd){
     ${sorted.length?sorted.map(a=>{
       const isLue=lues.includes(a.id);
       const isEp=epinglees.includes(a.id);
-      return`<div class="ai" style="${!isLue?'background:rgba(26,80,96,.03);border-left:3px solid var(--T4);':''}" onclick="marquerLue(${a.id})">
+      return`<div class="ai" style="${!isLue?'background:rgba(26,80,96,.03);border-left:3px solid var(--T4);':''};cursor:pointer" onclick="voirDetailsAnnonce(${a.id})">
         <div class="ai-top">
           <div class="ai-av" style="${!isLue?'background:linear-gradient(135deg,var(--T3),var(--T4));':'background:var(--S2);color:var(--tx4);'}">${a.auteur.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
           <div style="flex:1;min-width:0">
@@ -1999,6 +2267,24 @@ function showMbr(id){
   document.getElementById('dm-email').textContent=m.email||'—';
   openD('d-membre');
 }
+function ouvrirTxPourMembre(membId){
+  const m=ld(K.m).find(x=>x.id===membId);
+  if(!m)return;
+  closeD('d-membre');
+  openM('m-add-tx');
+  // Préremplir description
+  setTimeout(()=>{
+    const desc=document.getElementById('tx-desc');
+    if(desc)desc.value=`Cotisation ${m.prenom} ${m.nom}`;
+    const mnt=document.getElementById('tx-mnt');
+    if(mnt)mnt.value=m.cotis||15000;
+    const cat=document.getElementById('tx-cat');
+    if(cat){cat.value='Cotisations';onTxCatChange('Cotisations');}
+    const memSel=document.getElementById('tx-membre-id');
+    if(memSel){const opt=memSel.querySelector(`option[value="${membId}"]`);if(opt)opt.selected=true;}
+  },100);
+}
+
 function markPaid(){
   const mbrs=ld(K.m),i=mbrs.findIndex(m=>m.id===sbId);
   if(i>=0){mbrs[i].cotisOk=true;sv(K.m,mbrs);}
@@ -2017,6 +2303,18 @@ function saveMembre(){
   sv(K.m,mbrs);
   addNotif(`${p} ${n} a rejoint le dahira`,'check-circle');
   closeM('m-add-membre');toast(`✓ ${p} ${n} ajouté(e)`);goPage(curPage);
+}
+
+function onTxCatChange(val){
+  const el=document.getElementById('tx-cotis-detail');
+  if(!el)return;
+  el.style.display=val==='Cotisations'?'block':'none';
+  // Remplir la liste des membres
+  const sel=document.getElementById('tx-membre-id');
+  if(sel&&val==='Cotisations'){
+    const mbrs=ld(K.m);
+    sel.innerHTML=`<option value="">-- Tous les membres --</option>`+mbrs.map(m=>`<option value="${m.id}">${m.prenom} ${m.nom}</option>`).join('');
+  }
 }
 
 function saveTx(){
@@ -2332,20 +2630,39 @@ function presidentMembres(){
     </div>`).join('')}
   </div>
   <div class="card">
-    <div class="ch"><h4>${icon('layers',14,'var(--T4)')} Commissions actives</h4></div>
+    <div class="ch">
+      <h4>${icon('layers',14,'var(--T4)')} Commissions actives</h4>
+      <button class="lnk" onclick="ajouterCommission()">${icon('plus',12,'var(--T4)')} Ajouter</button>
+    </div>
     ${commissions.map(c=>{
       const cm=mbrs.filter(m=>m.commission===c);
-      return`<div class="pi"><div class="ph"><span class="pn" style="display:flex;align-items:center;gap:6px">${icon('git-branch',12,'var(--T4)')} ${c}</span><span style="font-size:11px;font-weight:700;color:var(--T4)">${cm.length} membres</span></div>
-      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:4px">${cm.slice(0,5).map(m=>`<span style="font-size:9.5px;background:rgba(26,80,96,.08);border:1px solid rgba(26,80,96,.14);border-radius:20px;padding:2px 8px;color:var(--tx3)">${m.prenom}</span>`).join('')}${cm.length>5?`<span style="font-size:9.5px;color:var(--tx4)">+${cm.length-5}</span>`:''}</div>
+      const ok=cm.filter(m=>m.cotisOk).length;
+      const p=cm.length?Math.round(ok/cm.length*100):0;
+      return`<div class="pi" style="cursor:pointer" onclick="voirDetailsCommission('${c}')">
+        <div class="ph"><span class="pn" style="display:flex;align-items:center;gap:6px">${icon('git-branch',12,'var(--T4)')} ${c}</span><span style="font-size:11px;font-weight:700;color:var(--T4)">${cm.length} membres · ${p}%</span></div>
+        <div class="pt" style="height:5px"><div class="pf" style="width:${p}%;${p<65?'background:linear-gradient(90deg,var(--rd),#f87171)':''}"></div></div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:5px">${cm.slice(0,4).map(m=>`<span style="font-size:9.5px;background:rgba(26,80,96,.08);border:1px solid rgba(26,80,96,.14);border-radius:20px;padding:2px 8px;color:var(--tx3)">${m.prenom}</span>`).join('')}${cm.length>4?`<span style="font-size:9.5px;color:var(--tx4)">+${cm.length-4}</span>`:''}</div>
       </div>`;
     }).join('')}
   </div>`;
 }
 
+function ajouterCommission(){
+  const nom=prompt('Nom de la nouvelle commission :');
+  if(!nom||!nom.trim())return;
+  const params=JSON.parse(localStorage.getItem('sd_params')||'{}');
+  if(!params.commissions)params.commissions=['Finances','Organisation','Communication','Sociale','Culturelle'];
+  if(params.commissions.includes(nom.trim())){toast('Cette commission existe déjà');return;}
+  params.commissions.push(nom.trim());
+  localStorage.setItem('sd_params',JSON.stringify(params));
+  toast(`✓ Commission "${nom.trim()}" créée`);
+  goPage(curPage);
+}
+
 function presidentEvenements(){
   const evs=ld(K.e).sort((a,b)=>a.date.localeCompare(b.date));
   return`
-  <div class="ph2"><h2>Événements</h2><p>Approbation et suivi du calendrier</p></div>
+  <div class="ph2"><h2>Activités & Événements</h2><p>Approbation et suivi du calendrier</p></div>
   <button class="btn-p" style="margin-bottom:14px;padding:11px;font-size:13px" onclick="openM('m-add-ev')">${icon('plus',13,'white')} Créer & approuver un événement</button>
   <div class="ftabs">
     <div class="ftab on" onclick="ftab(this)">Tous (${evs.length})</div>
@@ -2375,25 +2692,104 @@ function presidentRapports(){
   const rec=txs.filter(t=>t.type==='recette').reduce((s,t)=>s+t.montant,0);
   const dep=txs.filter(t=>t.type==='depense').reduce((s,t)=>s+t.montant,0);
   const ok=mbrs.filter(m=>m.cotisOk).length;
+
+  // Graphique 1 : Membres par statut (donut simplifié)
+  const statuts=[
+    {l:'Actifs',n:mbrs.filter(m=>m.statut==='ACTIF'||m.statut==='actif').length,c:'var(--T4)'},
+    {l:'En retard',n:mbrs.filter(m=>m.statut==='EN_RETARD').length,c:'var(--rd)'},
+    {l:'Suspendus',n:mbrs.filter(m=>m.statut==='SUSPENDU').length,c:'#6B7280'},
+    {l:'Invités',n:mbrs.filter(m=>m.statut==='INVITE').length,c:'var(--gold)'},
+  ];
+  const totalMbr=mbrs.length||1;
+  const gMembres=`<div style="display:flex;gap:6px;align-items:flex-end;height:80px">
+    ${statuts.map(s=>{const h=Math.round(s.n/totalMbr*80);return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:9px;font-weight:700;color:var(--tx)">${s.n}</div>
+      <div style="width:100%;height:${Math.max(h,4)}px;border-radius:5px 5px 0 0;background:${s.c};min-height:4px"></div>
+      <div style="font-size:8px;color:var(--tx4);text-align:center">${s.l}</div>
+    </div>`;}).join('')}
+  </div>`;
+
+  // Graphique 2 : Taux recouvrement par type cotisation
+  const cotisTypes=[
+    {l:'Mensuelle',ok:mbrs.filter(m=>m.cotisOk).length,total:mbrs.length},
+    {l:'Commission',ok:Math.round(mbrs.length*0.7),total:mbrs.length},
+    {l:'Événement',ok:Math.round(mbrs.length*0.55),total:mbrs.length},
+    {l:'Extraordinaire',ok:Math.round(mbrs.length*0.4),total:mbrs.length},
+  ];
+  const gCotis=cotisTypes.map(c=>{const p=c.total?Math.round(c.ok/c.total*100):0;return`
+    <div class="pi"><div class="ph"><span class="pn">${c.l}</span><span class="pv" style="color:${p>=70?'var(--gr)':'var(--rd)'}">${p}%</span></div>
+    <div class="pt" style="height:8px"><div class="pf" style="width:${p}%;${p<65?'background:linear-gradient(90deg,var(--rd),#f87171)':''}"></div></div>
+    <div class="pb">${c.ok}/${c.total} membres</div></div>`;}).join('');
+
+  // Graphique 3 : Transactions par catégorie
+  const cats={};
+  txs.forEach(t=>{if(!cats[t.cat])cats[t.cat]={rec:0,dep:0};cats[t.cat][t.type==='recette'?'rec':'dep']+=t.montant;});
+  const catKeys=Object.keys(cats);
+  const maxCat=Math.max(...catKeys.map(k=>Math.max(cats[k].rec,cats[k].dep)),1);
+  const gCats=`<div style="display:flex;gap:5px;align-items:flex-end;height:80px;overflow-x:auto;padding-bottom:2px">
+    ${catKeys.map(k=>{
+      const hr=Math.round(cats[k].rec/maxCat*75);
+      const hd=Math.round(cats[k].dep/maxCat*75);
+      return`<div style="min-width:44px;flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+        <div style="width:100%;display:flex;align-items:flex-end;gap:2px;height:75px">
+          ${cats[k].rec>0?`<div style="flex:1;height:${Math.max(hr,3)}px;border-radius:3px 3px 0 0;background:var(--T4)"></div>`:''}
+          ${cats[k].dep>0?`<div style="flex:1;height:${Math.max(hd,3)}px;border-radius:3px 3px 0 0;background:var(--rd)"></div>`:''}
+        </div>
+        <div style="font-size:7px;color:var(--tx4);text-align:center;line-height:1.2">${k.split('/')[0].slice(0,8)}</div>
+      </div>`;}).join('')}
+  </div>
+  <div style="display:flex;gap:12px;justify-content:center;margin-top:6px">
+    <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:6px;border-radius:2px;background:var(--T4)"></div><span style="font-size:9px;color:var(--tx4)">Recettes</span></div>
+    <div style="display:flex;align-items:center;gap:4px"><div style="width:10px;height:6px;border-radius:2px;background:var(--rd)"></div><span style="font-size:9px;color:var(--tx4)">Dépenses</span></div>
+  </div>`;
+
+  // Graphique 4 : Taux participation par événement
+  const gEvts=evs.length?`<div style="display:flex;flex-direction:column;gap:8px">
+    ${evs.slice(-5).map(e=>{
+      const inscrits=(e.inscrits||[]).length;
+      const p=mbrs.length?Math.round(inscrits/mbrs.length*100):0;
+      return`<div><div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:11px;font-weight:600;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:200px">${e.titre}</span>
+        <span style="font-size:11px;font-weight:700;color:${p>=50?'var(--gr)':'var(--or)'}">${inscrits} (${p}%)</span>
+      </div>
+      <div class="pt" style="height:7px"><div class="pf" style="width:${p}%;${p<30?'background:linear-gradient(90deg,var(--or),#fb923c)':''}"></div></div>
+    </div>`;}).join('')}
+  </div>`:`<div class="empty"><p>Aucun événement enregistré</p></div>`;
+
   return`
-  <div class="ph2"><h2>Rapports & Synthèse</h2><p>Bilan de santé du dahira</p></div>
+  <div class="ph2"><h2>Rapports & Analyses</h2><p>Tableaux de bord visuels du dahira</p></div>
   <div style="display:flex;gap:8px;margin-bottom:14px">
-    <button class="btn-p" style="flex:1;padding:10px;font-size:12px" onclick="toast('📊 Rapport PDF généré ✓')">${icon('file-text',13,'white')} Rapport mensuel PDF</button>
-    <button class="btn-s" style="padding:10px 14px;font-size:12px" onclick="toast('📥 Export Excel téléchargé ✓')">${icon('download',13,'var(--tx2)')} Excel</button>
+    <button class="btn-p" style="flex:1;padding:10px;font-size:12px" onclick="toast('📊 Rapport PDF généré ✓')">${icon('file-text',13,'white')} Rapport PDF</button>
+    <button class="btn-s" style="padding:10px 14px;font-size:12px" onclick="toast('📥 Export Excel ✓')">${icon('download',13,'var(--tx2)')} Excel</button>
   </div>
   <div class="row">
-    <div class="sc sc-gr"><div class="sc-ic">${icon('trending-up',16,'var(--gr)')}</div><div class="sc-n">${fn(rec)}</div><div class="sc-l">Recettes totales</div></div>
-    <div class="sc sc-rd"><div class="sc-ic">${icon('trending-down',16,'var(--rd)')}</div><div class="sc-n">${fn(dep)}</div><div class="sc-l">Dépenses totales</div></div>
-    <div class="sc sc-g"><div class="sc-ic">${icon('wallet',16,'var(--gold)')}</div><div class="sc-n">${fn(Math.max(0,rec-dep))}</div><div class="sc-l">Solde net</div></div>
+    <div class="sc sc-gr"><div class="sc-ic">${icon('trending-up',16,'var(--gr)')}</div><div class="sc-n">${fn(rec)}</div><div class="sc-l">Recettes</div></div>
+    <div class="sc sc-rd"><div class="sc-ic">${icon('trending-down',16,'var(--rd)')}</div><div class="sc-n">${fn(dep)}</div><div class="sc-l">Dépenses</div></div>
+    <div class="sc sc-g"><div class="sc-ic">${icon('wallet',16,'var(--gold)')}</div><div class="sc-n">${fn(Math.max(0,rec-dep))}</div><div class="sc-l">Solde</div></div>
     <div class="sc sc-bl"><div class="sc-ic">${icon('check-circle',16,'var(--T4)')}</div><div class="sc-n">${Math.round(ok/Math.max(mbrs.length,1)*100)}%</div><div class="sc-l">Cotisations</div></div>
   </div>
-  <div class="card">
-    <div class="ch"><h4>${icon('bar-chart-2',14,'var(--T4)')} Cotisations par commission</h4></div>
-    ${['Finances','Organisation','Communication','Sociale','Culturelle'].map(c=>{
-      const cm=mbrs.filter(m=>m.commission===c),ok2=cm.filter(m=>m.cotisOk).length,p=cm.length?Math.round(ok2/cm.length*100):0,tot=cm.filter(m=>m.cotisOk).reduce((s,m)=>s+m.cotis,0);
-      return`<div class="pi"><div class="ph"><span class="pn">${c}</span><span class="pv">${p}% · ${fn(tot)} FCFA</span></div><div class="pt"><div class="pf" style="width:${p}%;${p<65?'background:linear-gradient(90deg,var(--rd),#f87171)':''}"></div></div><div class="pb">${ok2}/${cm.length} à jour · ${cm.length-ok2} arriéré${cm.length-ok2>1?'s':''}</div></div>`;
-    }).join('')}
+
+  <div class="two">
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch"><h4>${icon('users',14,'var(--T4)')} Membres par statut</h4></div>
+      <div style="padding:14px 16px">${gMembres}</div>
+    </div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="ch"><h4>${icon('credit-card',14,'var(--T4)')} Recouvrement par type cotisation</h4></div>
+      ${gCotis}
+    </div>
   </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><h4>${icon('bar-chart-2',14,'var(--T4)')} Transactions par catégorie</h4></div>
+    <div style="padding:14px 16px">${gCats}</div>
+  </div>
+
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><h4>${icon('calendar',14,'var(--T4)')} Taux de participation aux événements</h4></div>
+    <div style="padding:14px 16px">${gEvts}</div>
+  </div>
+
   <div class="card">
     <div class="ch"><h4>${icon('file-text',14,'var(--T4)')} Dernières transactions</h4></div>
     ${txs.slice(-5).reverse().map(t=>`<div class="tr">
@@ -2493,7 +2889,7 @@ function secretaireMembres(){
 function secretaireEvenements(){
   const evs=ld(K.e).sort((a,b)=>a.date.localeCompare(b.date));
   return`
-  <div class="ph2"><h2>Événements</h2><p>Calendrier des activités du dahira</p></div>
+  <div class="ph2"><h2>Activités & Événements</h2><p>Calendrier des activités du dahira</p></div>
   <button class="btn-p" style="margin-bottom:14px;padding:11px;font-size:13px" onclick="openM('m-add-ev')">${icon('plus',13,'white')} Créer un événement</button>
   <div class="card">
     ${evs.map(e=>{const d=e.date.split('-');return`<div class="er" onclick="toast('${e.titre} · ${e.lieu}')">
@@ -2628,7 +3024,7 @@ function commissionMembres(){
 function commissionEvenements(){
   const evs=ld(K.e).filter(e=>e.comm==='Organisation').sort((a,b)=>a.date.localeCompare(b.date));
   return`
-  <div class="ph2"><h2>Activités</h2><p>Initiatives de la Commission Organisation</p></div>
+  <div class="ph2"><h2>Activités & Événements</h2><p>Commission Organisation</p></div>
   <button class="btn-p" style="margin-bottom:14px;padding:11px;font-size:13px" onclick="openM('m-add-ev')">${icon('plus',13,'white')} Planifier une activité</button>
   ${evs.length?`<div class="card">
     ${evs.map(e=>{const d=e.date.split('-');return`<div class="er">
@@ -2840,12 +3236,35 @@ function presidentCoranSessions(){
   const sessions=JSON.parse(localStorage.getItem('sd_coran_sessions')||'[]');
   const done=hizbs.filter(h=>h.status==='done').length;
   const pct=Math.round(done/30*100);
+  // Session par défaut si aucune créée
+  const allSessions=[{id:0,titre:'Lecture collective — Intention Gamou 2026',dateDebut:'2026-01-01',dateFin:'2026-04-30',mode:'juz30',statut:'active',done,pct},...sessions.map(s=>({...s,done:hizbs.filter(h=>h.status==='done').length,pct}))];
   return`
-  <div class="ph2"><h2>Sessions Coran</h2><p>Créer et approuver les lectures collectives</p></div>
+  <div class="ph2"><h2>Sessions Coran</h2><p>${allSessions.length} session${allSessions.length>1?'s':''} · ${allSessions.filter(s=>s.statut==='active').length} en cours</p></div>
   <div style="display:flex;gap:8px;margin-bottom:14px">
-    <button class="btn-p" style="flex:2;padding:11px;font-size:13px" onclick="creerSessionCoran()">${icon('plus',13,'white')} Créer une session</button>
+    <button class="btn-p" style="flex:2;padding:11px;font-size:13px" onclick="openM('m-add-session-coran')">${icon('plus',13,'white')} Nouvelle session</button>
     <button class="btn-s" style="flex:1;padding:11px;font-size:12px" onclick="lancerRelancesCoranAuto()">${icon('bell-ring',13,'var(--tx2)')} Relancer</button>
   </div>
+  <!-- LISTE DES SESSIONS -->
+  <div class="st"><h3>Sessions de lecture</h3></div>
+  ${allSessions.map(s=>`<div class="card" style="margin-bottom:10px;cursor:pointer" onclick="goPage('coran_detail')">
+    <div style="padding:14px 16px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px">
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13.5px;font-weight:700;color:var(--tx)">${s.titre}</div>
+          <div style="font-size:10px;color:var(--tx4);margin-top:2px">${s.dateDebut?fd(s.dateDebut):'—'}${s.dateFin?' → '+fd(s.dateFin):''}</div>
+        </div>
+        <span class="bdg ${s.statut==='active'?'b-ok':'b-sy'}" style="flex-shrink:0;margin-left:8px">${s.statut==='active'?'En cours':'Terminée'}</span>
+      </div>
+      <div style="height:6px;background:var(--S2);border-radius:99px;overflow:hidden;margin-bottom:6px">
+        <div style="height:100%;width:${s.pct||0}%;border-radius:99px;background:linear-gradient(90deg,var(--T4),var(--gold-g))"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="font-size:10px;color:var(--tx4)">${s.done||0}/30 Juz complétés</span>
+        <span style="font-size:10px;font-weight:700;color:var(--T4)">${s.pct||0}%</span>
+      </div>
+    </div>
+  </div>`).join('')}
+  <div class="st" style="margin-top:8px"><h3>Dashboard session active</h3></div>
   <div class="card" style="background:linear-gradient(135deg,var(--T0),var(--T3));border-color:rgba(60,140,140,.2);margin-bottom:14px">
     <div style="padding:16px">
       <div style="font-size:11px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;font-weight:700">${icon('book-open',13,'var(--gold-g)')} Session en cours</div>
@@ -3078,7 +3497,38 @@ function presidentParametres(){
   const seuilAlerte=params.seuilAlerte||80;
   const decoupageCoran=params.decoupageCoran||'juz30';
   return`
-  <div class="ph2"><h2>Paramètres du Dahira</h2><p>Al-Mouridiya Dakar-Plateau</p></div>
+  <div class="ph2"><h2>Paramètres du Dahira</h2><p>Configuration générale</p></div>
+
+  <!-- BLOC INFOS DAHIRA -->
+  <div class="card" style="margin-bottom:12px">
+    <div class="ch"><h4>${icon('building',14,'var(--T4)')} Informations du Dahira</h4><button class="lnk" onclick="sauvegarderInfosDahira()">Enregistrer</button></div>
+    <div style="padding:14px 16px">
+      <div class="fg" style="margin-bottom:11px"><label style="display:block;font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em">Nom complet</label>
+        <input id="di-nom" value="${JSON.parse(localStorage.getItem('sd_dahira_info')||'{}').nom||'Al-Mouridiya Dakar-Plateau'}" style="width:100%;padding:10px 13px;border:1.5px solid var(--S2);border-radius:10px;font-size:13.5px;background:var(--S0);color:var(--tx);outline:none;font-family:'Outfit',sans-serif">
+      </div>
+      <div class="fg" style="margin-bottom:11px"><label style="display:block;font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em">Confrérie / Obédience</label>
+        <select id="di-conf" style="width:100%;padding:10px 13px;border:1.5px solid var(--S2);border-radius:10px;font-size:13.5px;background:var(--S0);color:var(--tx);outline:none;font-family:'Outfit',sans-serif">
+          ${['Mouridiya','Tijaniya','Khadriya','Layène','Niassène','Autre'].map(c=>`<option ${(JSON.parse(localStorage.getItem('sd_dahira_info')||'{}').conf||'Mouridiya')===c?'selected':''}>${c}</option>`).join('')}
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px">
+        <div class="fg"><label style="display:block;font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em">Région</label>
+          <select id="di-region" style="width:100%;padding:10px 13px;border:1.5px solid var(--S2);border-radius:10px;font-size:13px;background:var(--S0);color:var(--tx);outline:none;font-family:'Outfit',sans-serif">
+            ${['Dakar','Thiès','Kaolack','Diourbel','Ziguinchor','Saint-Louis','Louga','Fatick','Tambacounda','Kolda','Matam','Kaffrine','Kédougou','Sédhiou'].map(r=>`<option ${(JSON.parse(localStorage.getItem('sd_dahira_info')||'{}').region||'Dakar')===r?'selected':''}>${r}</option>`).join('')}
+          </select>
+        </div>
+        <div class="fg"><label style="display:block;font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em">Département</label>
+          <input id="di-dept" value="${JSON.parse(localStorage.getItem('sd_dahira_info')||'{}').dept||'Dakar'}" style="width:100%;padding:10px 13px;border:1.5px solid var(--S2);border-radius:10px;font-size:13px;background:var(--S0);color:var(--tx);outline:none;font-family:'Outfit',sans-serif" placeholder="Ex: Plateau">
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:11px"><label style="display:block;font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em">Adresse du siège</label>
+        <input id="di-adresse" value="${JSON.parse(localStorage.getItem('sd_dahira_info')||'{}').adresse||'Rue 10 × 21, Dakar Plateau'}" style="width:100%;padding:10px 13px;border:1.5px solid var(--S2);border-radius:10px;font-size:13.5px;background:var(--S0);color:var(--tx);outline:none;font-family:'Outfit',sans-serif" placeholder="Adresse complète">
+      </div>
+      <div class="fg"><label style="display:block;font-size:10px;font-weight:700;color:var(--tx3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.07em">Date de création</label>
+        <input id="di-date" type="date" value="${JSON.parse(localStorage.getItem('sd_dahira_info')||'{}').dateCreation||'2010-01-15'}" style="width:100%;padding:10px 13px;border:1.5px solid var(--S2);border-radius:10px;font-size:13.5px;background:var(--S0);color:var(--tx);outline:none;font-family:'Outfit',sans-serif">
+      </div>
+    </div>
+  </div>
 
   <div class="card" style="margin-bottom:12px">
     <div class="ch"><h4>${icon('layers',14,'var(--T4)')} Communication</h4></div>
@@ -3149,6 +3599,301 @@ function presidentParametres(){
       <button onclick="toast('💾 Sauvegarde manuelle lancée · Données sécurisées')" style="width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--bd);background:var(--S0);color:var(--tx2);font-size:12px;font-weight:600;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">${icon('download',13,'var(--tx2)')} Lancer sauvegarde manuelle</button>
     </div>
   </div>`;
+}
+
+/* ════ MODAL DÉTAILS ANNONCE ════ */
+function voirDetailsAnnonce(annId){
+  const a=ld(K.a).find(x=>x.id===annId);if(!a)return;
+  const el=document.getElementById('ann-detail-content');
+  if(!el)return;
+  el.innerHTML=`
+    <div style="margin-bottom:12px">
+      ${a.importance==='urgente'?`<div class="ai-urg" style="display:inline-flex;margin-bottom:8px">${icon('alert-triangle',9,'var(--rd)')} Urgent</div>`:''}
+      <div style="font-size:18px;font-weight:800;color:var(--tx);margin-bottom:6px">${a.titre}</div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <span class="etag t-re">${a.type}</span>
+        <span style="font-size:10.5px;color:var(--tx4)">📢 ${a.cible}</span>
+      </div>
+    </div>
+    <div style="font-size:13.5px;color:var(--tx2);line-height:1.7;margin-bottom:14px">${a.body}</div>
+    <div style="padding:12px;background:var(--S1);border-radius:10px;display:flex;align-items:center;gap:10px">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--T3),var(--T4));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff">${a.auteur.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
+      <div><div style="font-size:12px;font-weight:700;color:var(--tx)">${a.auteur}</div><div style="font-size:10px;color:var(--tx4)">${fd(a.date)}</div></div>
+    </div>`;
+  marquerLue(annId);
+  openM('m-detail-ann');
+}
+
+/* ════ MODAL DÉTAILS ÉVÉNEMENT ════ */
+function voirDetailsEvenement(evId){
+  const e=ld(K.e).find(x=>x.id===evId);if(!e)return;
+  const d=e.date.split('-');
+  const inscrits=e.inscrits||[];
+  const presents=JSON.parse(localStorage.getItem('sd_pres_'+evId)||'[]');
+  const el=document.getElementById('ev-detail-content');
+  if(!el)return;
+  el.innerHTML=`
+    <div style="background:linear-gradient(135deg,var(--T0),var(--T3));border-radius:14px;padding:16px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div class="ed" style="border-color:rgba(60,140,140,.3)"><div class="edy">${d[2]}</div><div class="edm">${MONTHS[parseInt(d[1])-1]||''}</div></div>
+        <div>
+          <div style="font-size:16px;font-weight:800;color:#fff">${e.titre}</div>
+          <span class="etag ${e.type==='Spirituel'?'t-sp':e.type==='Social'?'t-so':'t-re'}" style="margin-top:4px;display:inline-flex">${e.type}</span>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:rgba(0,0,0,.3);border-radius:9px;padding:9px;text-align:center"><div style="font-size:12px;font-weight:700;color:var(--gold-g)">${e.heure}</div><div style="font-size:8px;color:rgba(255,255,255,.3);text-transform:uppercase">Heure</div></div>
+        <div style="background:rgba(0,0,0,.3);border-radius:9px;padding:9px;text-align:center"><div style="font-size:12px;font-weight:700;color:rgba(100,220,150,.9)">${inscrits.length}${e.capacite?'/'+e.capacite:''}</div><div style="font-size:8px;color:rgba(255,255,255,.3);text-transform:uppercase">Inscrits</div></div>
+      </div>
+    </div>
+    <div class="dp-info" style="margin-bottom:12px">
+      <div class="dib"><div class="dib-l">Lieu</div><div class="dib-v">${e.lieu||'—'}</div></div>
+      <div class="dib"><div class="dib-l">Commission</div><div class="dib-v">${e.comm||'—'}</div></div>
+      <div class="dib"><div class="dib-l">Statut</div><div class="dib-v"><span class="bdg ${e.statut==='PROGRAMME'?'b-ok':e.statut==='TERMINE'?'b-sy':'b-lt'}">${e.statut||'—'}</span></div></div>
+      <div class="dib"><div class="dib-l">Présences</div><div class="dib-v">${presents.length} validées</div></div>
+      ${e.capacite?`<div class="dib"><div class="dib-l">Capacité</div><div class="dib-v">${e.capacite} max</div></div>`:''}
+    </div>
+    ${e.desc?`<div style="font-size:13px;color:var(--tx2);line-height:1.6;margin-bottom:14px">${e.desc}</div>`:''}
+    ${role==='membre'?`<button onclick="toggleInscription(${evId},'Fatou Amar');closeM('m-detail-ev')" style="width:100%;padding:12px;border-radius:11px;border:none;background:${inscrits.includes('Fatou Amar')?'var(--gr-b)':'linear-gradient(135deg,var(--T3),var(--T4))'};color:${inscrits.includes('Fatou Amar')?'var(--gr)':'#fff'};font-size:14px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px">${inscrits.includes('Fatou Amar')?icon('check-circle',16,'var(--gr)')+'Se désinscrire':icon('plus',16,'white')+'S\'inscrire'}</button>`:''}`;
+  openM('m-detail-ev');
+}
+
+/* ════ SESSION CORAN : save ════ */
+function saveSessionCoran(){
+  const titre=document.getElementById('cs-titre')?.value.trim();
+  const debut=document.getElementById('cs-debut')?.value;
+  const fin=document.getElementById('cs-fin')?.value;
+  if(!titre||!debut){toast('Titre et date de début requis');return;}
+  const mode=document.getElementById('cs-mode')?.value||'juz30';
+  const repartition=document.getElementById('cs-repartition')?.value||'auto';
+  const sessions=JSON.parse(localStorage.getItem('sd_coran_sessions')||'[]');
+  sessions.push({id:Date.now(),titre,dateDebut:debut,dateFin:fin||'',intention:document.getElementById('cs-intention')?.value||'',mode,repartition,statut:'active',createdAt:today()});
+  localStorage.setItem('sd_coran_sessions',JSON.stringify(sessions));
+  if(repartition==='auto'){
+    const mbrs=ld(K.m).filter(m=>m.statut==='ACTIF'||m.statut==='actif');
+    const hizbs=ld(K.c);
+    const libres=hizbs.filter(h=>h.status==='free');
+    libres.forEach((h,i)=>{const m=mbrs[i%Math.max(mbrs.length,1)];h.status='taken';h.user=m.prenom+' '+m.nom.charAt(0)+'.';});
+    sv(K.c,hizbs);
+  }
+  addNotif(`Session "${titre}" créée · Répartition ${repartition}`,'book-open');
+  closeM('m-add-session-coran');
+  toast(`✓ Session "${titre}" créée`);
+  goPage('coran');
+}
+
+/* ════ COTISATION : save nouvelle cotisation ════ */
+function saveDahira(){
+  const nom=document.getElementById('nd-nom')?.value.trim();
+  if(!nom){toast('Nom du dahira requis');return;}
+  const dahiras=JSON.parse(localStorage.getItem('sd_dahiras_cudis')||'[]');
+  const newD={
+    id:Date.now(),
+    n:nom,
+    conf:document.getElementById('nd-conf')?.value||'Mouridiya',
+    s:document.getElementById('nd-statut')?.value||'Affilié',
+    region:document.getElementById('nd-region')?.value||'Dakar',
+    dept:document.getElementById('nd-dept')?.value||'',
+    adresse:document.getElementById('nd-adresse')?.value||'',
+    dateCreation:document.getElementById('nd-date')?.value||today(),
+    m:parseInt(document.getElementById('nd-membres')?.value)||0,
+    solde:'0',
+    c:0,
+    createdAt:today(),
+  };
+  dahiras.push(newD);
+  localStorage.setItem('sd_dahiras_cudis',JSON.stringify(dahiras));
+  addNotif(`Nouveau dahira "${nom}" enregistré · ${newD.s}`,'building');
+  closeM('m-add-dahira');
+  toast(`✓ Dahira "${nom}" enregistré avec statut : ${newD.s}`);
+  goPage(curPage);
+}
+
+function saveCotisation(){
+  const nom=document.getElementById('nc-nom')?.value.trim();
+  const montant=parseInt(document.getElementById('nc-montant')?.value)||0;
+  if(!nom){toast('Nom de la cotisation requis');return;}
+  const cotisations=JSON.parse(localStorage.getItem('sd_cotis_types')||'[]');
+  cotisations.push({
+    id:'c_'+Date.now(),
+    label:nom,
+    type:document.getElementById('nc-type')?.value||'ordinaire',
+    periode:document.getElementById('nc-periode')?.value||'mensuelle',
+    montant,
+    montantType:document.getElementById('nc-montant-type')?.value||'fixe',
+    debut:document.getElementById('nc-debut')?.value||today(),
+    fin:document.getElementById('nc-fin')?.value||'',
+    cible:document.getElementById('nc-cible')?.value||'tous',
+    statut:'active',
+    createdAt:today(),
+  });
+  localStorage.setItem('sd_cotis_types',JSON.stringify(cotisations));
+  addNotif(`Nouvelle cotisation "${nom}" créée`,'credit-card');
+  closeM('m-add-cotisation');
+  toast(`✓ Cotisation "${nom}" créée`);
+  goPage(curPage);
+}
+
+/* ════ PAIEMENT PARTIEL : modal ════ */
+let _ppCotisId=null,_ppMontantTotal=0,_ppLabel='';
+function paiementPartiel(cotisId,montantTotal,label){
+  _ppCotisId=cotisId;_ppMontantTotal=montantTotal;_ppLabel=label;
+  const paid=JSON.parse(localStorage.getItem('sd_cotis_1')||'{}');
+  const deja=paid['partiel_'+cotisId]||0;
+  const reste=montantTotal-deja;
+  const el=document.getElementById('pp-confirm-box');
+  if(el){el.innerHTML=`
+    <div class="pay-ico">${icon('wallet',28,'rgba(100,220,150,.9)')}</div>
+    <div class="pay-title">${label}</div>
+    <div class="pay-sub">Déjà versé : ${fn(deja)} FCFA · Reste : ${fn(reste)} FCFA</div>
+    <div class="pay-amount">${fn(montantTotal)} FCFA total</div>`;}
+  const inp=document.getElementById('pp-montant');
+  if(inp){inp.value='';inp.max=reste;inp.placeholder=`Max : ${fn(reste)} FCFA`;}
+  openM('m-paiement-partiel');
+}
+function confirmerPaiementPartiel(){
+  const montant=parseInt(document.getElementById('pp-montant')?.value)||0;
+  const mode=document.getElementById('pp-mode')?.value||'Espèces';
+  if(!montant||montant<=0){toast('Montant invalide');return;}
+  const pk='sd_cotis_1';
+  const paid=JSON.parse(localStorage.getItem(pk)||'{}');
+  const existant=paid['partiel_'+_ppCotisId]||0;
+  paid['partiel_'+_ppCotisId]=existant+montant;
+  if(paid['partiel_'+_ppCotisId]>=_ppMontantTotal){paid['done_'+_ppCotisId]=true;delete paid['partiel_'+_ppCotisId];}
+  localStorage.setItem(pk,JSON.stringify(paid));
+  const txs=ld(K.t);
+  txs.push({id:nid(txs),type:'recette',desc:`Paiement partiel — ${_ppLabel} (via ${mode})`,montant,date:today(),cat:'Cotisations',note:'Paiement partiel'});
+  sv(K.t,txs);
+  addNotif(`Paiement partiel ${fn(montant)} FCFA — ${_ppLabel}`,'check-circle');
+  closeM('m-paiement-partiel');
+  toast(`✓ ${fn(montant)} FCFA enregistré via ${mode}`);
+  goPage(curPage);
+}
+
+/* ════ DÉTAILS COMMISSION ════ */
+function voirDetailsCommission(commName){
+  const mbrs=ld(K.m).filter(m=>m.commission===commName);
+  const ok=mbrs.filter(m=>m.cotisOk).length;
+  const tit=document.getElementById('dc-titre');
+  const el=document.getElementById('dc-content');
+  if(tit)tit.textContent='Commission '+commName;
+  if(!el)return;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px">
+      <div class="dib" style="text-align:center"><div class="dib-l">Membres</div><div style="font-size:20px;font-weight:800;color:var(--T4)">${mbrs.length}</div></div>
+      <div class="dib" style="text-align:center"><div class="dib-l">À jour</div><div style="font-size:20px;font-weight:800;color:var(--gr)">${ok}</div></div>
+      <div class="dib" style="text-align:center"><div class="dib-l">Taux</div><div style="font-size:20px;font-weight:800;color:${ok/Math.max(mbrs.length,1)>=0.7?'var(--gr)':'var(--rd)'}">${mbrs.length?Math.round(ok/mbrs.length*100):0}%</div></div>
+    </div>
+    ${mbrs.length?mbrs.map(m=>`<div class="mr" onclick="showMbr(${m.id})">
+      <div class="av" style="background:${col(m.id)}">${ini(m)}</div>
+      <div class="mi"><div class="mn">${m.prenom} ${m.nom}</div><div class="ms">${m.tel||'—'} · ${statutLabel(m.statut)}</div></div>
+      <span class="bdg ${m.cotisOk?'b-ok':'b-lt'}">${m.cotisOk?'À jour':'Retard'}</span>
+    </div>`).join(''):`<div class="empty"><p>Aucun membre dans cette commission</p></div>`}
+    ${role==='president'?`<button onclick="affecterMembreCommission('${commName}');closeD('d-commission')" style="width:100%;margin-top:12px;padding:11px;border-radius:10px;border:1.5px solid var(--T4);background:rgba(26,80,96,.07);color:var(--T4);font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px">${icon('user-plus',14,'var(--T4)')} Affecter un membre</button>`:''}`;
+  openD('d-commission');
+}
+
+function affecterMembreCommission(commName){
+  const mbrs=ld(K.m).filter(m=>m.commission!==commName);
+  const el=document.getElementById('amc-liste');
+  if(!el)return;
+  el.innerHTML=mbrs.map(m=>`<div class="mr" style="cursor:pointer" onclick="toggleSelectMbr(this,${m.id})">
+    <input type="checkbox" id="amc-${m.id}" style="width:16px;height:16px;accent-color:var(--T4);flex-shrink:0">
+    <div class="av" style="background:${col(m.id)}">${ini(m)}</div>
+    <div class="mi"><div class="mn">${m.prenom} ${m.nom}</div><div class="ms">${m.commission}</div></div>
+  </div>`).join('');
+  window._affectComm=commName;
+  openM('m-add-membre-commission');
+}
+
+function toggleSelectMbr(row,id){
+  const cb=document.getElementById('amc-'+id);
+  if(cb)cb.checked=!cb.checked;
+}
+
+function confirmerAjoutMembreCommission(){
+  const mbrs=ld(K.m);
+  const comm=window._affectComm;
+  let count=0;
+  mbrs.forEach(m=>{
+    const cb=document.getElementById('amc-'+m.id);
+    if(cb&&cb.checked){m.commission=comm;count++;}
+  });
+  sv(K.m,mbrs);
+  closeM('m-add-membre-commission');
+  toast(`✓ ${count} membre${count>1?'s':''} affecté${count>1?'s':''} à la commission ${comm}`);
+  goPage(curPage);
+}
+
+/* ════ DÉTAILS DAHIRA (Admin CUDIS) ════ */
+function voirDetailsDahira(dahiraData){
+  const tit=document.getElementById('dd-titre');
+  const el=document.getElementById('dd-content');
+  if(tit)tit.textContent=dahiraData.n||'Dahira';
+  if(!el)return;
+  el.innerHTML=`
+    <div style="background:linear-gradient(135deg,var(--T0),var(--T3));border-radius:14px;padding:14px;margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+        <div><div style="font-size:14px;font-weight:800;color:#fff">${dahiraData.n}</div><div style="font-size:10px;color:rgba(255,255,255,.4);margin-top:2px">${dahiraData.conf||'—'}</div></div>
+        <span class="bdg ${dahiraData.s==='Affilié'?'b-ok':'b-sy'}" style="align-self:flex-start">${dahiraData.s||'—'}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="background:rgba(0,0,0,.3);border-radius:9px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--gold-g)">${dahiraData.m||0}</div><div style="font-size:8px;color:rgba(255,255,255,.3);text-transform:uppercase">Membres</div></div>
+        <div style="background:rgba(0,0,0,.3);border-radius:9px;padding:9px;text-align:center"><div style="font-size:18px;font-weight:800;color:rgba(100,220,150,.9)">${dahiraData.c||0}%</div><div style="font-size:8px;color:rgba(255,255,255,.3);text-transform:uppercase">Cotisations</div></div>
+      </div>
+    </div>
+    <div class="dp-info" style="margin-bottom:14px">
+      <div class="dib"><div class="dib-l">Solde</div><div class="dib-v">${dahiraData.solde||'—'} FCFA</div></div>
+      <div class="dib"><div class="dib-l">Confrérie</div><div class="dib-v">${dahiraData.conf||'—'}</div></div>
+    </div>
+    ${dahiraData.s==='En cours'?`<div style="display:flex;gap:8px">
+      <button onclick="toast('✓ Dahira validé et activé');closeD('d-dahira');goPage('dahiras')" class="btn-p" style="flex:1;padding:10px;font-size:12px">${icon('check-circle',13,'white')} Approuver</button>
+      <button onclick="toast('Demande refusée');closeD('d-dahira')" class="btn-d" style="flex:1;padding:10px;font-size:12px">${icon('trash',13,'var(--rd)')} Refuser</button>
+    </div>`:''}`;
+  openD('d-dahira');
+}
+
+/* ════ MODIFIER PROFIL MEMBRE (modal) ════ */
+function modifierProfil(){
+  const m=ld(K.m).find(x=>x.prenom==='Fatou')||ld(K.m)[0];
+  if(!m)return;
+  const elP=document.getElementById('mp-prenom');const elN=document.getElementById('mp-nom');
+  const elT=document.getElementById('mp-tel');const elE=document.getElementById('mp-email');
+  const elL=document.getElementById('mp-langue');
+  if(elP)elP.value=m.prenom||'';if(elN)elN.value=m.nom||'';
+  if(elT)elT.value=m.tel||'';if(elE)elE.value=m.email||'';
+  if(elL)elL.value=m.langue||'fr';
+  openM('m-modifier-profil');
+}
+function sauvegarderProfil(){
+  const mbrs=ld(K.m);
+  const m=mbrs.find(x=>x.prenom==='Fatou')||mbrs[0];
+  if(!m)return;
+  const i=mbrs.findIndex(x=>x.id===m.id);
+  if(i>=0){
+    mbrs[i].prenom=document.getElementById('mp-prenom')?.value||m.prenom;
+    mbrs[i].nom=document.getElementById('mp-nom')?.value||m.nom;
+    mbrs[i].tel=document.getElementById('mp-tel')?.value||m.tel;
+    mbrs[i].email=document.getElementById('mp-email')?.value||m.email;
+    mbrs[i].langue=document.getElementById('mp-langue')?.value||'fr';
+    sv(K.m,mbrs);
+  }
+  closeM('m-modifier-profil');
+  toast('✓ Profil mis à jour');
+  goPage(curPage);
+}
+
+function sauvegarderInfosDahira(){
+  const info={
+    nom:document.getElementById('di-nom')?.value||'',
+    conf:document.getElementById('di-conf')?.value||'Mouridiya',
+    region:document.getElementById('di-region')?.value||'Dakar',
+    dept:document.getElementById('di-dept')?.value||'',
+    adresse:document.getElementById('di-adresse')?.value||'',
+    dateCreation:document.getElementById('di-date')?.value||'',
+  };
+  localStorage.setItem('sd_dahira_info',JSON.stringify(info));
+  toast('✓ Informations du dahira enregistrées');
 }
 
 function saveParam(key, value){
